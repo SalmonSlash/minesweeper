@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import random
 
 # 1. ตั้งค่า WebDriver
 options = webdriver.ChromeOptions()
@@ -38,15 +39,15 @@ def scrape_grid(rows, cols):
     script = """
         const rows = arguments[0], cols = arguments[1];
         // สร้างตาราง 2D อย่างถูกต้อง
-        const grid = Array.from({ length: rows },
-                                () => Array(cols).fill(0));
+        const grid = Array.from({ length: rows },() => Array(cols).fill('n'));
+
         document.querySelectorAll('.square').forEach(cell => {
             const [r, c] = cell.id.split('_').map(Number);
             const openClass = Array.from(cell.classList)
                                  .find(cl => cl.startsWith('open'));
             const value = openClass
                           ? parseInt(openClass.replace('open',''), 10)
-                          : 0;
+                          : 'n';
             // ตรวจสอบขอบเขตก่อนเซ็ต
             if (r > 0 && r <= rows && c > 0 && c <= cols) {
                 grid[r-1][c-1] = value;
@@ -62,6 +63,24 @@ def scrape_grid(rows, cols):
 rows, cols = detect_grid_size()
 print(f"Detected: {rows}×{cols}")
 grid = scrape_grid(rows, cols)
-print(grid)
+print("Grid scraped:")
+for row in grid:
+    print(row)
+
+row, col = random.randint(1, rows), random.randint(1, cols)
+print(f"Random cell to click: ({row}, {col})")
+cell_id = f"{row}_{col}"
+cell = driver.find_element(By.ID, cell_id)
+cell.click()
+
+print(f"Detected: {rows}×{cols}")
+grid = scrape_grid(rows, cols)
+print("Grid scraped:")
+for row in grid:
+    print(row)
 
 time.sleep(5)  # รอ 5 วินาทีเพื่อดูผลลัพธ์
+
+
+driver.quit()  # ปิด WebDriver เมื่อเสร็จสิ้น
+# print("Grid scraped:", grid)
