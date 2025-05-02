@@ -80,33 +80,35 @@ def deterministic_one_move(grid):
             val = grid[r][c]
             if not isinstance(val, int) or val <= 0:
                 continue
+
             nbrs = []
             for dr in (-1,0,1):
                 for dc in (-1,0,1):
-                    if dr == dc == 0: continue
+                    if dr == dc == 0:
+                        continue
                     rr, cc = r+dr, c+dc
-                    if 0 <= rr < rows and 0 <= cc < cols:
+                    # กรองให้ 1 <= rr <= rows-2 และ 1 <= cc <= cols-2
+                    if 1 <= rr < rows-1 and 1 <= cc < cols-1:
                         nbrs.append((rr, cc))
-            # print(f"Cell ({r},{c}) has {val} unopened neighbors: {nbrs}")
+
             unopened = [(i,j) for (i,j) in nbrs if grid[i][j] is None]
             flagged  = [(i,j) for (i,j) in nbrs if grid[i][j] == 'F']
-            print(f"Cell ({r},{c}) has {val} Neighbours:, {nbrs} unopened neighbors: {unopened}, flagged: {flagged}")
-            # ถ้า unseen+flag == val -> flag rest
+            print(f"Cell ({r},{c}) val={val} nbrs={nbrs} unopen={unopened} flagged={flagged}")
+
+            # ปักธง
             if len(unopened) + len(flagged) == val and unopened:
-                i,j = unopened[0]
-                click_cell(i,j, flag=True)
-                grid = scrape_grid(rows, cols)
-                for r in range(rows):
-                    for c in range(cols):
-                        print(grid[r][c], end=" ")
-                    print()
+                i, j = unopened[0]
+                click_cell(i, j, flag=True)
                 return True
-            # ถ้า flagged == val -> open rest
+
+            # เปิดช่อง
             if len(flagged) == val and unopened:
-                i,j = unopened[0]
-                click_cell(i,j, flag=False)
+                i, j = unopened[0]
+                click_cell(i, j, flag=False)
                 return True
+
     return False
+
 
 
 # Main
@@ -122,10 +124,10 @@ for r in range(rows):
 grid = scrape_grid(rows, cols)
 
 # Loop deterministic moves until none left
-# while True:
-#     grid = scrape_grid(rows, cols)
-#     if not deterministic_one_move(grid):
-#         print('No more deterministic moves - stopping.')
-#         break
+while True:
+    grid = scrape_grid(rows, cols)
+    if not deterministic_one_move(grid):
+        print('No more deterministic moves - stopping.')
+        break
 time.sleep(100)
 print('Finished.')
