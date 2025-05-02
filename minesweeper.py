@@ -109,7 +109,26 @@ def deterministic_one_move(grid):
 
     return False
 
-
+def find_frontier(grid):
+    rows, cols = len(grid), len(grid[0])
+    frontier = set()
+    constraints = []
+    for r in range(rows):
+        for c in range(cols):
+            val = grid[r][c]
+            if isinstance(val, int) and val > 0:
+                nbrs = [(r+dr, c+dc)
+                        for dr in (-1, 0, 1)
+                        for dc in (-1, 0, 1)
+                        if (dr != 0 or dc != 0)
+                        and 0 <= r+dr < rows
+                        and 0 <= c+dc < cols]
+                unopened = [(i,j) for (i,j) in nbrs if grid[i][j] is None]
+                flagged = sum(1 for (i,j) in nbrs if grid[i][j] == 'F')
+                if unopened:
+                    frontier.update(unopened)
+                    constraints.append((unopened, val - flagged))
+    return sorted(frontier, key=lambda x: (x[0], x[1])), constraints
 
 # Main
 rows, cols = detect_size()
@@ -129,5 +148,9 @@ while True:
     if not deterministic_one_move(grid):
         print('No more deterministic moves - stopping.')
         break
-time.sleep(100)
+
+grid_frontier, constraints = find_frontier(grid)
+print(f"Frontier: {grid_frontier}")
+print(f"Constraints: {constraints}")
+time.sleep(500)
 print('Finished.')
