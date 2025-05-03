@@ -223,6 +223,14 @@ def compute_prob(frontier, constraints):
     print(f"Done: {solutions} valid in {nodes} nodes, time {time.time()-start:.1f}s")
     return probs
 
+def is_game_over():
+    try:
+        face = driver.find_element(By.ID, "face")
+        cls  = face.get_attribute("class")
+        return "facedead" in cls or "facewin" in cls
+    except:
+        return True  # ถ้าหาไม่เจอเลยก็ถือว่าจบ
+
 
 # Main
 rows, cols = detect_size()
@@ -244,32 +252,34 @@ MAX_SAME_CLICKS = 5   # ถ้าเกิน 3 ครั้ง ถือว่�
 
 # Loop deterministic moves until none left
 while True:
-    # 1) ทำ deterministic logic ให้หมด
+    if is_game_over():
+        break
+
+    # 1) deterministic
     while True:
+        if is_game_over():
+            break
         grid = scrape_grid(rows, cols)
         if not deterministic_one_move(grid):
             break
         time.sleep(0.05)
 
-    # 2) ถ้า deterministic จบ ให้ลอง probabilistic
-    grid = scrape_grid(rows, cols)
+    if is_game_over():
+        break
+
+    grid = scrape_grid(rows, cols)   # รอบนี้ปลอดภัย เพราะเช็คแล้ว
     frontier, constraints = find_frontier(grid)
     if not frontier:
-        break   # ไม่มีช่องให้ลอง
+        break
 
     probs = compute_prob(frontier, constraints)
 
     if probs:
-        print("probs:")
-        for cell, prob in probs.items():
-            print(f"  {cell}: {prob:.2f}")
-            # เลือกเซลล์ที่ P ต่ำสุด
-            target = min(probs, key=probs.get)
+        target = min(probs, key=probs.get)
     else:
-        print("No valid assignments, fallback to random")
-        # ถ้าไม่มี assignment valid เลย ก็สุ่มจาก frontier
         target = random.choice(frontier)
 
+    # check repeated clicks
     if target == last_click:
         same_click_count += 1
     else:
@@ -277,12 +287,12 @@ while True:
         last_click = target
 
     if same_click_count >= MAX_SAME_CLICKS:
-        print(f"🔴 Clicked {target} ซ้ำ {same_click_count} รอบ เกมน่าจะค้าง จบ หรือ แพ้ ")
+        print(f"🔴 Clicked {target} ซ้ำ {same_click_count} รอบ เกมน่าจะค้าง จบ หรือ แพ้")
         break
 
-    r, c = target
-    click_cell(r, c, flag=False)
+    click_cell(*target, flag=False)
     time.sleep(0.05)
+
 
 print('Finished.')
 print('Waiting 500 seconds... program will quit.')
